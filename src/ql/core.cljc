@@ -4,7 +4,7 @@
             [ql.pg.core]))
 
 
-(defmethod to-sql :ql/projection
+(defmethod to-sql :ql/select
   [acc expr]
   (reduce-separated
    ","
@@ -62,20 +62,20 @@
    acc (dissoc expr :ql/type)))
 
 
-(defmethod to-sql :ql/select
+(defmethod to-sql :ql/query
   [acc expr]
-  (reduce (fn [acc [k def-type]]
+  (reduce (fn [acc k]
             (if-let [v (get expr k)]
               (to-sql acc (if (and (map? v) (not (:ql/type v)))
-                             (assoc v :ql/type def-type)
+                            (assoc v :ql/type k)
                              v))
               acc))
-          acc [[:select :ql/projection]
-               [:from :ql/from]
-               [:where :ql/where]
-               [:joins :ql/joins]
-               [:limit :ql/limit]
-               [:offset :ql/offset]]))
+          acc [:ql/select
+               :ql/from
+               :ql/where
+               :ql/joins
+               :ql/limit
+               :ql/offset]))
 
 (defmethod to-sql :ql/limit
   [acc expr]
@@ -86,20 +86,24 @@
 
 (defmethod to-sql :ql/param
   [acc expr]
-  (-> acc
-      (conj-sql "?")
-      (conj-param (:ql/value expr))))
+  (let [v (if (vector? expr) (second expr) (:ql/value expr))]
+    (-> acc
+        (conj-sql "?")
+        (conj-param v))))
 
 (defmethod to-sql :ql/string
   [acc expr]
   (conj-sql acc (str "$str$" (:ql/value expr) "$str$")))
 
 (defmethod to-sql :ql/=
-  [acc [_ a b]]
-  (-> acc
-      (to-sql a)
-      (conj-sql "=")
-      (to-sql b)))
+  [acc expr]
+  (let [[a b] (if (vector? expr)
+                (rest expr)
+                [(get expr 0) (get expr 1)])]
+    (-> acc
+        (to-sql a)
+        (conj-sql "=")
+        (to-sql b))))
 
 (defmethod to-sql :ql/<>
   [acc [_ a b]]
@@ -130,6 +134,6 @@
 
 (defn sql [expr & [opts]]
   (->
-   {:sql [] :params []}
-   (to-sql  (update expr :ql/type (fn [x] (if x x :ql/select))))
+   {:sql [] :params [] :opts opts}
+   (to-sql  (update expr :ql/type (fn [x] (if x x :ql/query))))
    (update :sql (fn [x] (str/join " " x)))))
