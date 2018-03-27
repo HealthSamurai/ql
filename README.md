@@ -13,6 +13,7 @@
 * extendibility - to extend - just add one multi-method ql.method/to-sql
 * pure functional implementation - sql generation as a tree reduction
 * implicit params - manage params style jdbc, postgres, inline
+* use namespaced keywords
 * validation by clojure.spec
 * prefer hash-map over vector (support both, where vector is just sugar)
 * dsl's on top of it

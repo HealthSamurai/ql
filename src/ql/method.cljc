@@ -1,4 +1,5 @@
-(ns ql.method)
+(ns ql.method
+  (:require [clojure.string :as str]))
 
 (defn dispatch-sql [x]
   (cond (map? x) (get x :ql/type)
@@ -19,4 +20,19 @@
     (if (nil? xs)
       (f acc x)
       (recur (update (f acc x) :sql conj sep) xs))))
+
+(defn comma-separated [ks]
+  (->> ks
+       (mapv (fn [x] (if (keyword? x) (name x) (str x))))
+       (str/join ",")))
+
+;; (comma-separated [:a :b 0])
+
+(defn operator-args [opts]
+  (if (map? opts)
+    [(:ql/type opts)
+     (or (:left opts) (get opts 0))
+     (or (:right opts) (get opts 1))]
+    opts))
+
 

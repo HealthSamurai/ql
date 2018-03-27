@@ -102,7 +102,7 @@
                        :g :group}
              :ql/where {:user-ids [:ql/= :u.id :g.user_id]
                         :group-type [:ql/= :g.name "admin"]}})
-   {:sql "SELECT * FROM u user , g group WHERE /** user-ids **/ ( u.id = g.user_id ) AND /** group-type **/ ( g.name = 'admin' )", :params []})
+   {:sql "SELECT * FROM user u , group g WHERE /** user-ids **/ ( u.id = g.user_id ) AND /** group-type **/ ( g.name = 'admin' )", :params []})
 
   (matcho/match
    (sut/sql 
@@ -128,7 +128,7 @@
     {:ql/type :ql/select
      :resource {:ql/type :jsonb/build-object
                 :name :user.name
-                :address [:jsonb/merge
+                :address [:jsonb/||
                           [:jsonb/-> :resource :address]
                           {:ql/type :jsonb/build-object
                            :city "NY"
@@ -142,7 +142,7 @@
     {:ql/type :ql/select
      :resource {:ql/type :jsonb/build-object
                 :name :user.name
-                :address [:jsonb/merge
+                :address [:jsonb/||
                           [:jsonb/-> :resource :address]
                           {:ql/type :jsonb/build-object
                            :city {:ql/type :ql/param
