@@ -1,4 +1,6 @@
-# ql
+# ql 
+
+## data ast for sql, aka honeysql rethink
 
 [![Build Status](https://travis-ci.org/niquola/ql.svg?branch=master)](https://travis-ci.org/niquola/ql)
 
@@ -7,10 +9,13 @@
 
 `honeysql` is awesome idea, but....
 
-* composability
-* extendibility
-* pure fn implementation
-* implicit params
+* composability - it should be easy compose expressions into sql query
+* extendibility - to extend - just add one multi-method ql.method/to-sql
+* pure functional implementation - sql generation as a tree reduction
+* implicit params - manage params style jdbc, postgres, inline
+* validation by clojure.spec
+* prefer hash-map over vector (support both, where vector is just sugar)
+* dsl's on top of it
 
 ## Usage
 
