@@ -9,7 +9,7 @@
        (mapv (fn [x] (if (keyword? x) (name x) (str x))))
        (str/join ",")))
 
-(to-comma-separated [:a :b 0])
+;; (comma-separated [:a :b 0])
 
 (defn operator-args [opts]
   (if (map? opts)
