@@ -27,15 +27,20 @@
 
 (defmethod to-sql :ql/predicate
   [acc expr]
-  (reduce-separated
-   (or (:ql/comp expr) "AND")
-   (fn [acc [k v]]
-     (-> acc
-         (conj-sql "/**" (name k) "**/" "(")
-         (to-sql v)
-         (conj-sql ")")))
-   acc
-   (dissoc expr :ql/type :ql/comp)))
+  (cond
+    (map? expr)
+    (reduce-separated
+     (or (:ql/comp expr) "AND")
+     (fn [acc [k v]]
+       (-> acc
+           (conj-sql "/**" (name k) "**/" "(")
+           (to-sql v)
+           (conj-sql ")")))
+     acc
+     (dissoc expr :ql/type :ql/comp))
+
+    (vector? expr)
+    (to-sql expr)))
 
 (defmethod to-sql :ql/where
   [acc expr]
@@ -50,7 +55,9 @@
       true (conj-sql "JOIN")
       true (to-sql rel)
       true (conj-sql (name a) "ON")
-      true (to-sql (update on :ql/type (fn [x] (if x x :ql/predicate))))))
+      true (to-sql (if (map? on)
+                          (update on :ql/type (fn [x] (if x x :ql/predicate)))
+                          on))))
 
 (defmethod to-sql :ql/joins
   [acc expr]
@@ -120,9 +127,14 @@
   [acc expr]
   (conj-sql acc (str expr)))
 
+
 (defmethod to-sql java.lang.String
   [acc expr]
-  (conj-sql acc (str "'" expr "'")))
+  (if (= :honeysql (get-in acc [:opts :style]))
+    (-> acc
+       (conj-sql "?")
+       (conj-param expr))
+    (conj-sql acc (str "'" expr "'"))))
 
 (defmethod to-sql nil
   [acc expr]
@@ -135,5 +147,7 @@
 (defn sql [expr & [opts]]
   (->
    {:sql [] :params [] :opts opts}
-   (to-sql  (update expr :ql/type (fn [x] (if x x :ql/query))))
+   (to-sql  (if (map? expr)
+              (update expr :ql/type (fn [x] (if x x :ql/query)))
+              expr))
    (update :sql (fn [x] (str/join " " x)))))

@@ -113,6 +113,15 @@
                     :ql/on  {:by-ids [:ql/= :u.id :post.user_id]}}}})
    {:sql "SELECT * FROM post post LEFT JOIN user u ON /** by-ids **/ ( u.id = post.user_id )"})
 
+  (matcho/match
+   (sut/sql 
+    {:ql/select [:ql/*]
+     :ql/from {:post :post}
+     :ql/joins {:u {:ql/join-type "LEFT"
+                    :ql/rel :user
+                    :ql/on  [:ql/= :u.id :post.user_id]}}})
+   {:sql "SELECT * FROM post post LEFT JOIN user u ON u.id = post.user_id"})
+
 
   (matcho/match
    (sut/sql
