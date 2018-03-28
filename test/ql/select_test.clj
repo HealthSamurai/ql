@@ -10,7 +10,9 @@
 (deftest test-select 
   (matcho/match
    (ql/sql
-    {:ql/type :ql/query
+    {;; node type
+     :ql/type :ql/query
+     ;; selection
      :ql/select {:alias :u.column}
      ;; form {alias tbl | expression} 
      :ql/from {:u :user}
