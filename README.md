@@ -1,6 +1,6 @@
 # ql 
 
-## data ast for sql, aka honeysql rethink
+## data ast for sql, aka honeysql as base for dsl's on top of it
 
 [![Build Status](https://travis-ci.org/niquola/ql.svg?branch=master)](https://travis-ci.org/niquola/ql)
 

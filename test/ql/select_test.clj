@@ -19,7 +19,7 @@
      ;; named conditions
      :ql/where {:by-id {:ql/type :ql/= :left :u.id :right 5}}
      :ql/order-by {0 :u.name}
-     ;; :ql/group-by {:name :name}  ???
+     ;; :ql/group-by [:ql/group-by :name]
      :ql/limit {:ql/value 1}
      :ql/offset {:ql/value 10}})
 
