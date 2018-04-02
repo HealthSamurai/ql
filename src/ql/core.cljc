@@ -57,6 +57,41 @@
   [acc expr]
   (conj-sql acc (name expr)))
 
+(namespace :ql/ups)
+
+(defn clear-ql-keys [m]
+  (reduce (fn [m [k v]]
+            (if (= "ql" (namespace k))
+              m (assoc m k v))) {} m))
+
+
+(defn only-ql-keys [m]
+  (reduce (fn [m [k v]]
+            (if (= "ql" (namespace k))
+              (assoc m k v) m)) {} m))
+
+(only-ql-keys {:ql/a 1 :k 2})
+(clear-ql-keys {:ql/a 1 :k 2})
+
+(defmethod to-sql :ql/with
+  [acc expr]
+  (let [acc (conj-sql acc "WITH")
+        acc (reduce-separated
+             ","
+             (fn [acc [k v]]
+               (-> acc
+                   (conj-sql (name k) "AS" "(")
+                   (to-sql (-> v
+                               (update :ql/type (fn [x] (if x x :ql/query)))
+                               (dissoc :ql/weight)))
+                   (conj-sql ")\n")))
+             acc
+             (->>
+              (clear-ql-keys expr)
+              (sort-by :ql/weight)))]
+
+    (to-sql acc (assoc (only-ql-keys expr) :ql/type :ql/query))))
+
 (defn sql [expr & [opts]]
   (->
    {:sql [] :params [] :opts opts}

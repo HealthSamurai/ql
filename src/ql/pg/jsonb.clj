@@ -57,6 +57,19 @@
         (conj-sql "||")
         (to-sql b))))
 
+;; jsonb_agg(expression)	any	jsonb	No	aggregates values as a JSON array
+(defmethod to-sql :jsonb/agg
+  [acc args]
+  (let [expr (cond (map? args)
+                   (:expression args)
+                   (coll? args)
+                   (second args)
+                   :else (assert false (pr-str "Unexpected args for jsonb/agg " )))]
+    (-> acc
+        (conj-sql "jsonb_agg(")
+        (to-sql expr)
+        (conj-sql ")"))))
+
 ;; -	text	Delete key/value pair or string element from left operand. Key/value pairs are matched based on their key value.	'{"a": "b"}'::jsonb - 'a'
 ;; -	integer	Delete the array element with specified index (Negative integers count from the end). Throws an error if top level container is not an array.	'["a", "b"]'::jsonb - 1
 ;; -	text[]	Delete multiple key/value pairs or string elements from left operand. Key/value pairs are matched based on their key value.	'{"a": "b", "c": "d"}'::jsonb - '{a,c}'::text[]

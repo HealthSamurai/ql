@@ -97,6 +97,7 @@
 (defmethod to-sql :ql/join
   [acc {tp :ql/join-type rel :ql/rel on :ql/on a :ql/alias :as expr}]
   (cond-> acc
+      true (conj-sql "\n")
       tp (conj-sql tp)
       true (conj-sql "JOIN")
       true (to-sql rel)
@@ -109,9 +110,10 @@
   [acc expr]
   (reduce
    (fn [acc [k v]]
-     (to-sql acc (-> v
-                      (assoc :ql/alias k)
-                      (update :ql/type (fn [x] (if x x :ql/join))))))
+     (-> acc 
+         (to-sql (-> v
+                     (assoc :ql/alias k)
+                     (update :ql/type (fn [x] (if x x :ql/join)))))))
    acc (dissoc expr :ql/type)))
 
 
@@ -119,14 +121,17 @@
   [acc expr]
   (reduce (fn [acc k]
             (if-let [v (get expr k)]
-              (to-sql acc (if (and (map? v) (not (:ql/type v)))
+              (to-sql acc (cond
+                            (and (map? v) (not (:ql/type v)))
                             (assoc v :ql/type k)
-                             v))
+
+                            :else  v))
               acc))
           acc [:ql/select
                :ql/from
                :ql/where
                :ql/joins
+               :ql/group-by
                :ql/order-by
                :ql/limit
                :ql/offset]))
@@ -156,3 +161,10 @@
     (-> (conj-sql acc "OFFSET")
         (to-sql v))
     acc))
+
+(defmethod to-sql :ql/group-by
+  [acc [_ & cols]]
+  (reduce-separated
+   "," (fn [acc k]
+         (to-sql acc k))
+   (conj-sql acc "GROUP BY") cols))
