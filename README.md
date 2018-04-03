@@ -36,6 +36,13 @@
 
 ```
 
+## TODO
+
+* implement all postgresql functions + extensions
+* formatting options
+* params options
+* couple of top level DSL's like eager loading associations
+
 ## License
 
 Copyright © 2018 niquola

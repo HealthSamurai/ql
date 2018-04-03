@@ -4,7 +4,7 @@
             [matcho.core :as matcho]
             [ql.core :as ql]))
 
-(deftest test-dataq
+(deftest test-ql
 
   (testing "select"
 
@@ -82,8 +82,6 @@
                         :ql/value 10}})
 
    {:sql "SELECT name AS name , birthDate AS bd FROM user user WHERE /** user-ids **/ ( user.id = 5 ) LIMIT 10" :params []})
-
-  
 
   (matcho/match
    (sut/sql {:ql/type :ql/query

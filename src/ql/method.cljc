@@ -34,5 +34,3 @@
      (or (:left opts) (get opts 0))
      (or (:right opts) (get opts 1))]
     opts))
-
-
