@@ -50,7 +50,7 @@
                     {:format :jdbc}))
 
   (matcho/match
-   (db/query (ql/sql {:ql/type :ql/query
+   (db/query (ql/sql {:ql/type :ql/select
                       :ql/select {:resource :u.resource
                                   :id :u.id}
                       :ql/from {:u {:ql/type :ql/ident
