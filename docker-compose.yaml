@@ -1,0 +1,11 @@
+version: '3'
+services:
+  db:
+    image: postgres:10.3
+    container_name: qldb
+    ports:
+      - "${PGPORT}:5432"
+    environment:
+      POSTGRES_USER: ${PGUSER}
+      POSTGRES_DB: ${PGDATABASE}
+      POSTGRES_PASSWORD: ${PGPASSWORD}

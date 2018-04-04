@@ -1,8 +1,8 @@
 (ns ql.core
   (:require [clojure.string :as str]
             [ql.method :refer [to-sql conj-sql conj-param reduce-separated]]
+            [ql.insert]
             [ql.pg.core]))
-
 
 (defmethod to-sql :ql/select
   [acc expr]

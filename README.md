@@ -30,6 +30,14 @@
 
 ```
 
+## Dev
+
+```
+source .env
+docker-compose up -d
+start repl
+```
+
 ## License
 
 Copyright © 2018 niquola
