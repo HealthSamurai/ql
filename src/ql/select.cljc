@@ -1,6 +1,6 @@
 (ns ql.select
   (:require [clojure.string :as str]
-            [ql.method :refer [to-sql conj-sql conj-param reduce-separated]]))
+            [ql.method :refer [to-sql conj-sql conj-param reduce-separated clear-ql-keys]]))
 
 
 
@@ -124,41 +124,73 @@
              (rest expr))]
     (reduce-separated "," to-sql acc xs)))
 
+(defmethod to-sql :ql/with
+  [acc expr]
+  (reduce-separated
+   ","
+   (fn [acc [k v]]
+     (-> acc
+         (conj-sql (name k) "AS")
+         (assoc-in [:opts :nested] true)
+         (to-sql (-> v
+                     (update :ql/type (fn [x] (if x x :ql/select)))
+                     (dissoc :ql/weight)))
+         (conj-sql "\n")))
+   acc
+   (->>
+    (clear-ql-keys expr)
+    (sort-by :ql/weight))))
+
+(defn parens-if-nested [acc f]
+  (let [n (get-in acc [:opts :nested])]
+    (cond-> acc
+      n (conj-sql "(")
+      n (assoc-in [:opts :neste]  false)
+      true (f)
+      n (conj-sql ")"))))
 
 (defmethod to-sql :ql/select
   [acc expr]
-  (reduce (fn [acc {k :key tk :token tp :default-type }]
-            (if-let [v (get expr k)]
-              (cond-> acc 
-                tk (conj-sql tk)
-                true (to-sql (cond
-                              (and (map? v) (not (:ql/type v)) tp)
-                              (assoc v :ql/type tp)
-                              :else  v)))
-              acc))
-          acc [{:key :ql/select
-                :token "SELECT"
-                :default-type :ql/projection}
-               {:key :ql/from
-                :token "FROM"
-                :default-type :ql/from}
-               {:key :ql/where
-                :token "WHERE"
-                :default-type :ql/predicate}
-               {:key :ql/joins
-                :default-type :ql/joins}
-               {:key :ql/group-by
-                :token "GROUP BY"
-                :default-type :ql/projection}
-               {:key :ql/order-by
-                :token "ORDER BY"
-                :default-type :ql/list}
-               {:key :ql/limit
-                :token "LIMIT"
-                :default-type :ql/param}
-               {:key :ql/offset
-                :token "OFFSET"
-                :default-type :ql/param}]))
+  (parens-if-nested
+   acc
+   (fn [acc]
+     (reduce (fn [acc {k :key tk :token tp :default-type opts :opts}]
+               (if-let [v (get expr k)]
+                 (cond-> acc 
+                   opts (update :opts merge opts)
+                   tk (conj-sql tk)
+                   true (to-sql (cond
+                                  (and (map? v) (not (:ql/type v)) tp)
+                                  (assoc v :ql/type tp)
+                                  :else  v)))
+                 acc))
+             acc [{:key :ql/with
+                   :token "WITH"
+                   :default-type :ql/with}
+                  {:key :ql/select
+                   :token "SELECT"
+                                        :default-type :ql/projection}
+                                       {:key :ql/from
+                                        :token "FROM"
+                                        :opts {:nested true}
+                                        :default-type :ql/from}
+                                       {:key :ql/where
+                                        :token "WHERE"
+                                        :default-type :ql/predicate}
+                                       {:key :ql/joins
+                                        :default-type :ql/joins}
+                                       {:key :ql/group-by
+                                        :token "GROUP BY"
+                                        :default-type :ql/projection}
+                                       {:key :ql/order-by
+                                        :token "ORDER BY"
+                                        :default-type :ql/list}
+                                       {:key :ql/limit
+                                        :token "LIMIT"
+                                        :default-type :ql/param}
+                                       {:key :ql/offset
+                                        :token "OFFSET"
+                                        :default-type :ql/param}]))))
 
 (defmethod to-sql :ql/limit
   [acc expr]

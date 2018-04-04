@@ -66,24 +66,6 @@
                          (:ql/value args)))
                  "\"")))
 
-(defmethod to-sql :ql/with
-  [acc expr]
-  (let [acc (conj-sql acc "WITH")
-        acc (reduce-separated
-             ","
-             (fn [acc [k v]]
-               (-> acc
-                   (conj-sql (name k) "AS" "(")
-                   (to-sql (-> v
-                               (update :ql/type (fn [x] (if x x :ql/select)))
-                               (dissoc :ql/weight)))
-                   (conj-sql ")\n")))
-             acc
-             (->>
-              (clear-ql-keys expr)
-              (sort-by :ql/weight)))]
-
-    (to-sql acc (assoc (only-ql-keys expr) :ql/type :ql/select))))
 
 (defn sql [expr & [opts]]
   (let [res (->
