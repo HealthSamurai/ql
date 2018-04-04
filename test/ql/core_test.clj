@@ -146,23 +146,21 @@
     :params ["NY"]})
 
   (matcho/match
-   (sut/sql {:ql/type :ql/with
-             :users  {:ql/weight 0
-                      :ql/select {:name :name}
-                      :ql/from   {:users :users}}
-             :roles  {:ql/weight 1
-                      :ql/select {:name :name}
-                      :ql/from   {:group :group}
-                      :ql/joins  {:u {:ql/rel :users
-                                      :ql/on {:join-cond [:ql/= :u.id :g.user_id]}}}}
+   (sut/sql {:ql/with {:users  {:ql/weight 0
+                                :ql/select {:name :name}
+                                :ql/from   {:users :users}}
+                       :roles  {:ql/weight 1
+                                :ql/select {:name :name}
+                                :ql/from   {:group :group}
+                                :ql/joins  {:u {:ql/rel :users
+                                                :ql/on {:join-cond [:ql/= :u.id :g.user_id]}}}}}
              :ql/select {:u :u.name :g :g.name}
              :ql/from {:u :user
                        :r :roles}})
 
    {:sql
-    "WITH users AS ( SELECT name AS name FROM users users )\n , roles AS ( SELECT name AS name FROM group group \n JOIN users u ON /** join-cond **/ ( u.id = g.user_id ) )\n SELECT u.name AS u , g.name AS g FROM user u , roles r",
-    :params [],
-    :opts nil})
+    "WITH users AS ( SELECT name AS name FROM users users ) \n , roles AS ( SELECT name AS name FROM group group \n JOIN users u ON /** join-cond **/ ( u.id = g.user_id ) ) \n SELECT u.name AS u , g.name AS g FROM user u , roles r",
+    :params []})
 
 
 

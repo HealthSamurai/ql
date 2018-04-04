@@ -1,4 +1,13 @@
 language: clojure
-script: lein do clean, javac, test
+lein: lein2
+addons:
+  postgresql: "10"
+services:
+  - postgresql
+before_script:
+  - psql -c "CREATE USER test WITH PASSWORD 'test'"
+  - psql -c 'ALTER ROLE test WITH SUPERUSER'
+  - psql -c 'CREATE DATABASE test_db;' -U postgres
+script: env DATABASE_URL="jdbc:postgresql://localhost:5432/test_db?user=test&password=test" lein test
 jdk:
   - oraclejdk8
