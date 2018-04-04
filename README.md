@@ -36,7 +36,7 @@
 
 ```
 
-<<<<<<< HEAD
+
 ## Dev
 
 ```
@@ -44,14 +44,7 @@ source .env
 docker-compose up -d
 start repl
 ```
-=======
-## TODO
 
-* implement all postgresql functions + extensions
-* formatting options
-* params options
-* couple of top level DSL's like eager loading associations
->>>>>>> b80055a1d85d01a3e87c997e339c26a063f3e172
 
 ## License
 
