@@ -1,11 +1,9 @@
 (ns ql.insert-test
   (:require [ql.core :as ql]
             [ql.insert :as sut]
-            [ql.method :refer [to-sql]]
             [clojure.test :refer :all]
             [matcho.core :as matcho]))
 
-(to-sql {:sql []} :key)
 
 (deftest test-dataq
   (testing "select"

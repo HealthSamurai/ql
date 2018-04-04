@@ -1,4 +1,6 @@
-# ql
+# ql 
+
+## data ast for sql, aka honeysql as base for dsl's on top of it
 
 [![Build Status](https://travis-ci.org/niquola/ql.svg?branch=master)](https://travis-ci.org/niquola/ql)
 
@@ -7,10 +9,14 @@
 
 `honeysql` is awesome idea, but....
 
-* composability
-* extendibility
-* pure fn implementation
-* implicit params
+* composability - it should be easy compose expressions into sql query
+* extendibility - to extend - just add one multi-method ql.method/to-sql
+* pure functional implementation - sql generation as a tree reduction
+* implicit params - manage params style jdbc, postgres, inline
+* use namespaced keywords
+* validation by clojure.spec
+* prefer hash-map over vector (support both, where vector is just sugar)
+* dsl's on top of it
 
 ## Usage
 
@@ -30,6 +36,7 @@
 
 ```
 
+<<<<<<< HEAD
 ## Dev
 
 ```
@@ -37,6 +44,14 @@ source .env
 docker-compose up -d
 start repl
 ```
+=======
+## TODO
+
+* implement all postgresql functions + extensions
+* formatting options
+* params options
+* couple of top level DSL's like eager loading associations
+>>>>>>> b80055a1d85d01a3e87c997e339c26a063f3e172
 
 ## License
 

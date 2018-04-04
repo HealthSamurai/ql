@@ -1,9 +1,10 @@
 (ns ql.core-test
   (:require [ql.core :as sut]
             [clojure.test :refer :all]
-            [matcho.core :as matcho]))
+            [matcho.core :as matcho]
+            [ql.core :as ql]))
 
-(deftest test-dataq
+(deftest test-ql
 
   (testing "select"
 
@@ -82,8 +83,6 @@
 
    {:sql "SELECT name AS name , birthDate AS bd FROM user user WHERE /** user-ids **/ ( user.id = 5 ) LIMIT 10" :params []})
 
-  
-
   (matcho/match
    (sut/sql {:ql/type :ql/query
              :ql/select {:name :name
@@ -102,7 +101,7 @@
                        :g :group}
              :ql/where {:user-ids [:ql/= :u.id :g.user_id]
                         :group-type [:ql/= :g.name "admin"]}})
-   {:sql "SELECT * FROM u user , g group WHERE /** user-ids **/ ( u.id = g.user_id ) AND /** group-type **/ ( g.name = 'admin' )", :params []})
+   {:sql "SELECT * FROM user u , group g WHERE /** user-ids **/ ( u.id = g.user_id ) AND /** group-type **/ ( g.name = 'admin' )", :params []})
 
   (matcho/match
    (sut/sql 
@@ -111,7 +110,16 @@
      :ql/joins {:u {:ql/join-type "LEFT"
                     :ql/rel :user
                     :ql/on  {:by-ids [:ql/= :u.id :post.user_id]}}}})
-   {:sql "SELECT * FROM post post LEFT JOIN user u ON /** by-ids **/ ( u.id = post.user_id )"})
+   {:sql "SELECT * FROM post post \n LEFT JOIN user u ON /** by-ids **/ ( u.id = post.user_id )"})
+
+  (matcho/match
+   (sut/sql 
+    {:ql/select [:ql/*]
+     :ql/from {:post :post}
+     :ql/joins {:u {:ql/join-type "LEFT"
+                    :ql/rel :user
+                    :ql/on  [:ql/= :u.id :post.user_id]}}})
+   {:sql "SELECT * FROM post post \n LEFT JOIN user u ON u.id = post.user_id"})
 
 
   (matcho/match
@@ -119,7 +127,7 @@
     {:ql/type :ql/select
      :resource {:ql/type :jsonb/build-object
                 :name :user.name
-                :address [:jsonb/merge
+                :address [:jsonb/||
                           [:jsonb/-> :resource :address]
                           {:ql/type :jsonb/build-object
                            :city "NY"
@@ -127,13 +135,12 @@
 
    {:sql "SELECT ( jsonb_build_object( 'name' , user.name , 'address' , resource ->'address' || jsonb_build_object( 'city' , 'NY' , 'zip' , address.zip ) ) ) AS resource"})
 
-
   (matcho/match
    (sut/sql
     {:ql/type :ql/select
      :resource {:ql/type :jsonb/build-object
                 :name :user.name
-                :address [:jsonb/merge
+                :address [:jsonb/||
                           [:jsonb/-> :resource :address]
                           {:ql/type :jsonb/build-object
                            :city {:ql/type :ql/param
@@ -142,7 +149,38 @@
 
    {:sql "SELECT ( jsonb_build_object( 'name' , user.name , 'address' , resource ->'address' || jsonb_build_object( 'city' , ? , 'zip' , address.zip ) ) ) AS resource"
     :params ["NY"]})
+
+  (matcho/match
+   (sut/sql {:ql/type :ql/with
+             :users  {:ql/weight 0
+                      :ql/select {:name :name}
+                      :ql/from   {:users :users}}
+             :roles  {:ql/weight 1
+                      :ql/select {:name :name}
+                      :ql/from   {:group :group}
+                      :ql/joins  {:u {:ql/rel :users
+                                      :ql/on {:join-cond [:ql/= :u.id :g.user_id]}}}}
+             :ql/select {:u :u.name :g :g.name}
+             :ql/from {:u :user
+                       :r :roles}})
+
+   {:sql
+    "WITH users AS ( SELECT name AS name FROM users users )\n , roles AS ( SELECT name AS name FROM group group \n JOIN users u ON /** join-cond **/ ( u.id = g.user_id ) )\n SELECT u.name AS u , g.name AS g FROM user u , roles r",
+    :params [],
+    :opts nil})
+
+
+
+  (testing "group-by"
+    (matcho/match
+     (sut/sql {:ql/select {:a :expr :b :other}
+               :ql/from {:t :t}
+               :ql/group-by [:ql/group-by :expr :other]})
+     {:sql "SELECT expr AS a , other AS b FROM t t GROUP BY expr , other"}))
+
   )
+
+
 
 (sut/sql
  #:ql{:select {:name :u.name}

@@ -1,33 +1,22 @@
 (ns ql.pg.core
-  (:require [ql.method :refer [to-sql conj-sql conj-param reduce-separated]]))
-
-(defmethod to-sql :jsonb/build-object
-  [acc obj]
-  (let [acc (-> acc
-                (conj-sql "jsonb_build_object("))]
-    (->
-     (reduce-separated
-      ","
-      (fn [acc [k v]]
-        (-> acc
-            (to-sql (if (keyword? k) (name k) k))
-            (conj-sql ",")
-            (to-sql v)))
-      acc (dissoc obj :ql/type))
-     (conj-sql ")"))))
-
-(defmethod to-sql :jsonb/merge
-  [acc [_ a b]]
-  (-> acc
-      (to-sql a)
-      (conj-sql "||")
-      (to-sql b)))
-
-(defmethod to-sql :jsonb/->
-  [acc [_ col k]]
-  (-> acc
-      (to-sql col)
-      (conj-sql (str "->'" (name k) "'"))))
+  (:require
+   [clojure.string :as str]
+   [ql.method :refer [to-sql conj-sql conj-param reduce-separated]]
+   [ql.pg.jsonb]
+   [ql.pg.string]))
 
 
+(defn comma-separated [ks]
+  (->> ks
+       (mapv (fn [x] (if (keyword? x) (name x) (str x))))
+       (str/join ",")))
+
+;; (comma-separated [:a :b 0])
+
+(defn operator-args [opts]
+  (if (map? opts)
+    [(:ql/type opts)
+     (or (:left opts) (get opts 0))
+     (or (:right opts) (get opts 1))]
+    opts))
 
