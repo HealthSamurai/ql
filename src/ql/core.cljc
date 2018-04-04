@@ -1,6 +1,7 @@
 (ns ql.core
   (:require [clojure.string :as str]
-            [ql.method :refer [to-sql conj-sql conj-param reduce-separated operator-args]]
+            [ql.method :refer [to-sql conj-sql conj-param reduce-separated operator-args
+                               clear-ql-keys only-ql-keys]]
             [ql.select]
             [ql.insert]
             [ql.pg.core]))
@@ -8,9 +9,7 @@
 (defmethod to-sql :ql/param
   [acc expr]
   (let [v (if (vector? expr) (second expr) (:ql/value expr))]
-    (-> acc
-        (conj-sql "?")
-        (conj-param v))))
+    (conj-param acc v)))
 
 (defmethod to-sql :ql/string
   [acc expr]
@@ -56,21 +55,16 @@
   [acc expr]
   (conj-sql acc (name expr)))
 
-(namespace :ql/ups)
 
-(defn clear-ql-keys [m]
-  (reduce (fn [m [k v]]
-            (if (= "ql" (namespace k))
-              m (assoc m k v))) {} m))
-
-
-(defn only-ql-keys [m]
-  (reduce (fn [m [k v]]
-            (if (= "ql" (namespace k))
-              (assoc m k v) m)) {} m))
-
-(only-ql-keys {:ql/a 1 :k 2})
-(clear-ql-keys {:ql/a 1 :k 2})
+(defmethod to-sql :ql/ident
+  [acc args]
+  ;; TODO: do escaping
+  (conj-sql acc
+            (str "\""
+                 (name (if (vector? args)
+                         (second args )
+                         (:ql/value args)))
+                 "\"")))
 
 (defmethod to-sql :ql/with
   [acc expr]
@@ -92,9 +86,12 @@
     (to-sql acc (assoc (only-ql-keys expr) :ql/type :ql/query))))
 
 (defn sql [expr & [opts]]
-  (->
-   {:sql [] :params [] :opts opts}
-   (to-sql  (if (map? expr)
-              (update expr :ql/type (fn [x] (if x x :ql/query)))
-              expr))
-   (update :sql (fn [x] (str/join " " x)))))
+  (let [res (->
+             {:sql [] :params [] :opts opts}
+             (to-sql  (if (map? expr)
+                        (update expr :ql/type (fn [x] (if x x :ql/query)))
+                        expr))
+             (update :sql (fn [x] (str/join " " x))))]
+    (if (= :jdbc (:format opts))
+      (into [(:sql res)] (:params res))
+      res)))

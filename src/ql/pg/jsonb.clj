@@ -1,8 +1,13 @@
 (ns ql.pg.jsonb
   (:require
    [clojure.string :as str]
+   [cheshire.core :as json]
    [ql.method :refer [to-sql conj-sql conj-param reduce-separated operator-args comma-separated]]))
 
+(defmethod to-sql :ql/jsonb
+  [acc expr]
+  (conj-sql
+   acc (str "$JSON$" (json/generate-string (ql.method/clear-ql-keys expr)) "$JSON$")))
 
 ;; ->	int	Get JSON array element (indexed from zero, negative integers count from the end)	'[{"a":"foo"},{"b":"bar"},{"c":"baz"}]'::json->2	{"c":"baz"}
 ;; ->	text	Get JSON object field by key	'{"a": {"b":"foo"}}'::json->'a'	{"b":"foo"}
@@ -105,6 +110,7 @@
 ;; and values pairwise from two separate arrays. In all other respects it is
 ;; identical to the one-argument form. json_object('{a, b}', '{1,2}')
 ;; {"a": "1", "b": "2"}
+
 
 (defmethod to-sql :jsonb/build-object
   [acc obj]

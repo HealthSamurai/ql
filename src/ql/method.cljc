@@ -12,7 +12,9 @@
   (update acc :sql (fn [x] (apply conj x sql))))
 
 (defn conj-param [acc v]
-  (update acc :params conj v))
+  (-> acc 
+   (conj-sql "?")
+   (update :params conj v)))
 
 (defn reduce-separated [sep f acc coll]
   (loop [acc acc
@@ -34,3 +36,19 @@
      (or (:left opts) (get opts 0))
      (or (:right opts) (get opts 1))]
     opts))
+
+(namespace :ql/ups)
+
+(defn clear-ql-keys [m]
+  (reduce (fn [m [k v]]
+            (if (= "ql" (namespace k))
+              m (assoc m k v))) {} m))
+
+
+(defn only-ql-keys [m]
+  (reduce (fn [m [k v]]
+            (if (= "ql" (namespace k))
+              (assoc m k v) m)) {} m))
+
+(only-ql-keys {:ql/a 1 :k 2})
+(clear-ql-keys {:ql/a 1 :k 2})

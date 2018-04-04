@@ -10,6 +10,8 @@
     (matcho/match
      (ql/sql {:ql/type :ql/insert
               :ql/table_name :user
-              :ql/value {:id "1" :name "name"}
+              :ql/value {:id "1"
+                         :name {:ql/type :ql/jsonb
+                                :name "name"}}
               :ql/returing :*})
      )))
