@@ -75,7 +75,7 @@
                (-> acc
                    (conj-sql (name k) "AS" "(")
                    (to-sql (-> v
-                               (update :ql/type (fn [x] (if x x :ql/query)))
+                               (update :ql/type (fn [x] (if x x :ql/select)))
                                (dissoc :ql/weight)))
                    (conj-sql ")\n")))
              acc
@@ -83,13 +83,13 @@
               (clear-ql-keys expr)
               (sort-by :ql/weight)))]
 
-    (to-sql acc (assoc (only-ql-keys expr) :ql/type :ql/query))))
+    (to-sql acc (assoc (only-ql-keys expr) :ql/type :ql/select))))
 
 (defn sql [expr & [opts]]
   (let [res (->
              {:sql [] :params [] :opts opts}
              (to-sql  (if (map? expr)
-                        (update expr :ql/type (fn [x] (if x x :ql/query)))
+                        (update expr :ql/type (fn [x] (if x x :ql/select)))
                         expr))
              (update :sql (fn [x] (str/join " " x))))]
     (if (= :jdbc (:format opts))

@@ -8,22 +8,25 @@
 
 
 (deftest test-select 
+  (ql/sql {:ql/type :ql/projection
+           :alias :u.column})
+
   (matcho/match
    (ql/sql
     {;; node type
-     :ql/type :ql/query
+     :ql/type :ql/select
      ;; selection
      :ql/select {:alias :u.column}
      ;; form {alias tbl | expression} 
      :ql/from {:u :user}
      ;; named conditions
      :ql/where {:by-id {:ql/type :ql/= :left :u.id :right 5}}
-     :ql/order-by {0 :u.name}
+     :ql/order-by [:ql/list :u.name]
      ;; :ql/group-by [:ql/group-by :name]
-     :ql/limit {:ql/value 1}
-     :ql/offset {:ql/value 10}})
-
-   {:sql "SELECT u.column AS alias FROM user u WHERE /** by-id **/ ( u.id = 5 ) ORDER BY u.name LIMIT 1 OFFSET 10",
+     :ql/limit 1
+     :ql/offset 10})
+   {:sql
+    "SELECT u.column AS alias FROM user u WHERE /** by-id **/ ( u.id = 5 ) ORDER BY u.name LIMIT 1 OFFSET 10",
     :params []})
 
 
@@ -32,7 +35,9 @@
     {:ql/type :ql/select
      :ql/select :*
      :ql/from :user
-     :ql/where [:ql/= :u.id 1]})
-
+     :ql/where [:ql/= :u.id 1]
+     :ql/limit 10
+     :ql/offset 20}
+    )
    ))
 

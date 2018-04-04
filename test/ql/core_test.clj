@@ -9,12 +9,12 @@
   (testing "select"
 
     (matcho/match
-     (sut/sql {:ql/type :ql/select
+     (sut/sql {:ql/type :ql/projection
                :alias :column
                :constant "string"
                :param {:ql/type :ql/param
                        :ql/value 10}})
-     {:sql "SELECT column AS alias , 'string' AS constant , ( ? ) AS param"
+     {:sql "column AS alias , 'string' AS constant , ( ? ) AS param"
       :params [10]}))
 
 
@@ -23,80 +23,75 @@
    {:sql "?" :params [10]})
 
   (matcho/match
-   (sut/sql {:ql/type :ql/select
+   (sut/sql {:ql/type :ql/projection
              :alias :column})
-   {:sql "SELECT column AS alias"})
+   {:sql "column AS alias"})
 
   (matcho/match
-   (sut/sql {:ql/type :ql/select
+   (sut/sql {:ql/type :ql/projection
              :alias {:ql/type :ql/string
                      :ql/value "const"}})
-   {:sql "SELECT ( $str$const$str$ ) AS alias"})
+   {:sql "( $str$const$str$ ) AS alias"})
 
   (matcho/match
-   (sut/sql {:ql/type :ql/select
+   (sut/sql {:ql/type :ql/projection
              :alias {:ql/type :ql/param
                      :ql/value "const"}})
-   {:sql "SELECT ( ? ) AS alias" :params ["const"]})
+   {:sql "( ? ) AS alias" :params ["const"]})
 
   (matcho/match
-   (sut/sql {:ql/type :ql/select
-             :alias {:ql/type :ql/query
-                     :ql/select {:ql/type :ql/select
-                                 :x 1}}})
-   {:sql "SELECT ( SELECT 1 AS x ) AS alias" :params []})
+   (sut/sql {:ql/type :ql/projection
+             :alias {:ql/type :ql/select
+                     :ql/select {:ql/type :ql/projection :x 1}}})
+   {:sql "( SELECT 1 AS x ) AS alias" :params []})
 
   (matcho/match
-   (sut/sql {:ql/type :ql/where
+   (sut/sql {:ql/type :ql/predicate
              :ql/comp "AND"
              :cond-1 [:ql/= :user.id 1]
              :cond-2 [:ql/<> :user.role "admin"]})
 
-   {:sql "WHERE /** cond-1 **/ ( user.id = 1 ) AND /** cond-2 **/ ( user.role <> 'admin' )"})
+   {:sql "/** cond-1 **/ ( user.id = 1 ) AND /** cond-2 **/ ( user.role <> 'admin' )"})
 
   (matcho/match
-   (sut/sql {:ql/type :ql/where
+   (sut/sql {:ql/type :ql/predicate
              :cond-1 [:ql/= :user.id 1]
              :cond-2 [:ql/<> :user.role "admin"]})
 
-   {:sql "WHERE /** cond-1 **/ ( user.id = 1 ) AND /** cond-2 **/ ( user.role <> 'admin' )"})
+   {:sql "/** cond-1 **/ ( user.id = 1 ) AND /** cond-2 **/ ( user.role <> 'admin' )"})
 
   (matcho/match
-   (sut/sql {:ql/type :ql/where
+   (sut/sql {:ql/type :ql/predicate
              :ql/comp "OR"
              :cond-1 [:ql/= :user.id 1]
              :cond-2 [:ql/<> :user.role "admin"]})
 
-   {:sql "WHERE /** cond-1 **/ ( user.id = 1 ) OR /** cond-2 **/ ( user.role <> 'admin' )"})
+   {:sql "/** cond-1 **/ ( user.id = 1 ) OR /** cond-2 **/ ( user.role <> 'admin' )"})
 
   (matcho/match
-   (sut/sql {:ql/type :ql/query
-             :ql/select {:ql/type :ql/select
-                         :name :name
+   (sut/sql {:ql/type :ql/select
+             :ql/select {:name :name
                          :bd :birthDate}
              :ql/from {:ql/type :ql/from
                        :user :user}
-             :ql/where {:ql/type :ql/where
-                        :user-ids [:ql/= :user.id 5]}
-             :ql/limit {:ql/type :ql/limit
-                        :ql/value 10}})
+             :ql/where {:user-ids [:ql/= :user.id 5]}
+             :ql/limit 10})
 
    {:sql "SELECT name AS name , birthDate AS bd FROM user user WHERE /** user-ids **/ ( user.id = 5 ) LIMIT 10" :params []})
 
   (matcho/match
-   (sut/sql {:ql/type :ql/query
-             :ql/select {:name :name
-                         :bd :birthDate}
+   (sut/sql {:ql/type :ql/select
+             :ql/select {:name :name :bd :birthDate}
              :ql/from {:user :user}
              :ql/where {:user-ids [:ql/= :user.id 5]}
-             :ql/limit {:ql/value 10}})
+             :ql/limit 10})
 
    
 
    {:sql "SELECT name AS name , birthDate AS bd FROM user user WHERE /** user-ids **/ ( user.id = 5 ) LIMIT 10" :params []})
 
   (matcho/match
-   (sut/sql {:ql/select [:ql/*]
+   (sut/sql {:ql/select :*
              :ql/from {:u :user
                        :g :group}
              :ql/where {:user-ids [:ql/= :u.id :g.user_id]
@@ -105,7 +100,7 @@
 
   (matcho/match
    (sut/sql 
-    {:ql/select [:ql/*]
+    {:ql/select :*
      :ql/from {:post :post}
      :ql/joins {:u {:ql/join-type "LEFT"
                     :ql/rel :user
@@ -114,7 +109,7 @@
 
   (matcho/match
    (sut/sql 
-    {:ql/select [:ql/*]
+    {:ql/select :*
      :ql/from {:post :post}
      :ql/joins {:u {:ql/join-type "LEFT"
                     :ql/rel :user
@@ -124,7 +119,7 @@
 
   (matcho/match
    (sut/sql
-    {:ql/type :ql/select
+    {:ql/type :ql/projection
      :resource {:ql/type :jsonb/build-object
                 :name :user.name
                 :address [:jsonb/||
@@ -133,11 +128,11 @@
                            :city "NY"
                            :zip  :address.zip}]}})
 
-   {:sql "SELECT ( jsonb_build_object( 'name' , user.name , 'address' , resource ->'address' || jsonb_build_object( 'city' , 'NY' , 'zip' , address.zip ) ) ) AS resource"})
+   {:sql "( jsonb_build_object( 'name' , user.name , 'address' , resource ->'address' || jsonb_build_object( 'city' , 'NY' , 'zip' , address.zip ) ) ) AS resource"})
 
   (matcho/match
    (sut/sql
-    {:ql/type :ql/select
+    {:ql/type :ql/projection
      :resource {:ql/type :jsonb/build-object
                 :name :user.name
                 :address [:jsonb/||
@@ -147,7 +142,7 @@
                                   :ql/value "NY"}
                            :zip  :address.zip}]}})
 
-   {:sql "SELECT ( jsonb_build_object( 'name' , user.name , 'address' , resource ->'address' || jsonb_build_object( 'city' , ? , 'zip' , address.zip ) ) ) AS resource"
+   {:sql "( jsonb_build_object( 'name' , user.name , 'address' , resource ->'address' || jsonb_build_object( 'city' , ? , 'zip' , address.zip ) ) ) AS resource"
     :params ["NY"]})
 
   (matcho/match
@@ -175,7 +170,7 @@
     (matcho/match
      (sut/sql {:ql/select {:a :expr :b :other}
                :ql/from {:t :t}
-               :ql/group-by [:ql/group-by :expr :other]})
+               :ql/group-by [:ql/list :expr :other]})
      {:sql "SELECT expr AS a , other AS b FROM t t GROUP BY expr , other"}))
 
   )

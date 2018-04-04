@@ -18,17 +18,19 @@
 
 (defmethod to-sql :ql/insert
   [acc expr]
-  (reduce (fn [acc [prep k]]
+  (reduce (fn [acc {prep :token k :key}]
             (if-let [v (get expr k)]
               (cond->
                   acc
                 prep (conj-sql prep)
                 true (to-sql  (if (and (map? v) (not (:ql/type v))) (assoc v :ql/type k) v)))
               acc))
-          acc [["INSERT INTO" :ql/table_name]
-               [nil :ql/values]
-               [nil :ql/value]
-               ["RETURNING" :ql/returing]]))
+          acc [{:key :ql/table_name
+                :token "INSERT INTO"}
+               {:key :ql/values}
+               {:key :ql/value}
+               {:key :ql/returing
+                :token "RETURNING"}]))
 
 (defmethod to-sql :ql/truncate
   [acc expr]

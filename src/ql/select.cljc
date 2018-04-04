@@ -48,7 +48,7 @@
 
 ;; TABLE [ ONLY ] table_name [ * ]
 
-(defmethod to-sql :ql/select
+(defmethod to-sql :ql/projection
   [acc expr]
   (reduce-separated
    ","
@@ -58,8 +58,9 @@
          complex? (conj-sql "(")
          true (to-sql v)
          complex? (conj-sql ")")
-         true (conj-sql "AS" (name k)))))
-   (conj-sql acc "SELECT") (dissoc expr :ql/type)))
+         true (conj-sql "AS" (cond (keyword? k) (name k) :else k)))))
+   acc
+   (dissoc expr :ql/type)))
 
 (defmethod to-sql :ql/from
   [acc expr]
@@ -69,7 +70,7 @@
      (-> acc
          (to-sql v)
          (conj-sql (name k))))
-   (conj-sql acc "FROM") (dissoc expr :ql/type)))
+   acc (dissoc expr :ql/type)))
 
 (defmethod to-sql :ql/predicate
   [acc expr]
@@ -88,11 +89,7 @@
     (vector? expr)
     (to-sql expr)))
 
-(defmethod to-sql :ql/where
-  [acc expr]
-  (->
-   (conj-sql acc "WHERE")
-   (to-sql (assoc expr :ql/type :ql/predicate))))
+
 
 (defmethod to-sql :ql/join
   [acc {tp :ql/join-type rel :ql/rel on :ql/on a :ql/alias :as expr}]
@@ -117,24 +114,51 @@
    acc (dissoc expr :ql/type)))
 
 
-(defmethod to-sql :ql/query
+(defmethod to-sql :ql/list
   [acc expr]
-  (reduce (fn [acc k]
-            (if-let [v (get expr k)]
-              (to-sql acc (cond
-                            (and (map? v) (not (:ql/type v)))
-                            (assoc v :ql/type k)
+  (let [xs (if (map? expr)
+             (->> expr
+                  (ql.method/clear-ql-keys)
+                  (sort-by first)
+                  (mapv second))
+             (rest expr))]
+    (reduce-separated "," to-sql acc xs)))
 
-                            :else  v))
+
+(defmethod to-sql :ql/select
+  [acc expr]
+  (reduce (fn [acc {k :key tk :token tp :default-type }]
+            (if-let [v (get expr k)]
+              (cond-> acc 
+                tk (conj-sql tk)
+                true (to-sql (cond
+                              (and (map? v) (not (:ql/type v)) tp)
+                              (assoc v :ql/type tp)
+                              :else  v)))
               acc))
-          acc [:ql/select
-               :ql/from
-               :ql/where
-               :ql/joins
-               :ql/group-by
-               :ql/order-by
-               :ql/limit
-               :ql/offset]))
+          acc [{:key :ql/select
+                :token "SELECT"
+                :default-type :ql/projection}
+               {:key :ql/from
+                :token "FROM"
+                :default-type :ql/from}
+               {:key :ql/where
+                :token "WHERE"
+                :default-type :ql/predicate}
+               {:key :ql/joins
+                :default-type :ql/joins}
+               {:key :ql/group-by
+                :token "GROUP BY"
+                :default-type :ql/projection}
+               {:key :ql/order-by
+                :token "ORDER BY"
+                :default-type :ql/list}
+               {:key :ql/limit
+                :token "LIMIT"
+                :default-type :ql/param}
+               {:key :ql/offset
+                :token "OFFSET"
+                :default-type :ql/param}]))
 
 (defmethod to-sql :ql/limit
   [acc expr]
@@ -143,28 +167,3 @@
         (to-sql v))
     acc))
 
-(defmethod to-sql :ql/order-by
-  [acc expr]
-  (assert (map? expr) ":ql/order-by should be hash-map")
-  (let [acc (conj-sql acc "ORDER" "BY")]
-    (reduce (fn [acc [i x]]
-              (to-sql acc x))
-            acc (->> 
-                 (dissoc expr :ql/type)
-                 (filter (fn [[x _]] (integer? x)))
-                 (sort-by first)))))
-
-
-(defmethod to-sql :ql/offset
-  [acc expr]
-  (if-let [v (:ql/value expr)]
-    (-> (conj-sql acc "OFFSET")
-        (to-sql v))
-    acc))
-
-(defmethod to-sql :ql/group-by
-  [acc [_ & cols]]
-  (reduce-separated
-   "," (fn [acc k]
-         (to-sql acc k))
-   (conj-sql acc "GROUP BY") cols))
