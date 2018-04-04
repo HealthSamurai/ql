@@ -1,8 +1,15 @@
 language: clojure
 addons:
   postgresql: "10"
-services:
-  - postgresql
+  apt:
+    packages:
+      - postgresql-10
+      - postgresql-client-10
+# services:
+#   - postgresql
+env:
+  global:
+    - PGPORT=5433
 before_script:
   - psql -c "CREATE USER test WITH PASSWORD 'test'"
   - psql -c 'ALTER ROLE test WITH SUPERUSER'
