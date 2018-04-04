@@ -6,8 +6,6 @@
    [matcho.core :as matcho]))
 
 
-
-
 (deftest scratchpad
   (db/query ["select 1"])
 

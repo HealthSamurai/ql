@@ -24,5 +24,15 @@
      :ql/offset {:ql/value 10}})
 
    {:sql "SELECT u.column AS alias FROM user u WHERE /** by-id **/ ( u.id = 5 ) ORDER BY u.name LIMIT 1 OFFSET 10",
-    :params []}))
+    :params []})
+
+
+  (matcho/match
+   (ql/sql
+    {:ql/type :ql/select
+     :ql/select :*
+     :ql/from :user
+     :ql/where [:ql/= :u.id 1]})
+
+   ))
 
