@@ -29,7 +29,7 @@
                 :token "INSERT INTO"}
                {:key :ql/values}
                {:key :ql/value}
-               {:key :ql/returing
+               {:key :ql/returning
                 :token "RETURNING"}]))
 
 (defmethod to-sql :ql/truncate
