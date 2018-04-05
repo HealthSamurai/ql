@@ -7,7 +7,7 @@
 [![Clojars Project](https://img.shields.io/clojars/v/ql.svg)](https://clojars.org/ql)
 
 
-`honeysql` is awesome idea, but....
+[honeysql](https://github.com/jkk/honeysql) is an awesome idea, but....
 
 * composability - it should be easy compose expressions into sql query
 * extendibility - to extend - just add one multi-method ql.method/to-sql
@@ -36,13 +36,28 @@
 
 ```
 
+Insert with json and string values example:
 
-## Dev
+```clj
+(sql
+ #:ql{:type       :ql/insert
+      :table_name :db_table_name
+      :value      {:column_a {:ql/type :ql/jsonb
+                              :key     [:some :values]}
+                   :column_b "value-b"}
+      :returning  :*})
+;; =>
+{:sql    "INSERT INTO db_table_name ( column_a , column_b ) VALUES ( $JSON${\"key\":[\"some\",\"values\"]}$JSON$ , 'value-b' ) RETURNING *"
+ :params []
+ :opts   nil}
+```
+
+## Development
 
 ```
 source .env
 docker-compose up -d
-start repl
+lein repl
 ```
 
 
