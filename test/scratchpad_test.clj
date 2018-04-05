@@ -34,7 +34,7 @@
                      :ql/table_name {:ql/type :ql/ident
                                      :ql/value :User}
                      :ql/value {:id "user-1" :resource {:ql/type :ql/jsonb :name "Nicola"}}
-                     :ql/returing :*}
+                     :ql/returning :*}
 
                     {:format :jdbc}))
 
@@ -45,7 +45,7 @@
                                                         :email "nicola@health-samurai.io"
                                                         :name "Nicola"}}
                      :ql/on-conflict {:??? :TODO} 
-                     :ql/returing :*}
+                     :ql/returning :*}
 
                     {:format :jdbc}))
 
