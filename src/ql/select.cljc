@@ -145,7 +145,7 @@
   (let [n (get-in acc [:opts :nested])]
     (cond-> acc
       n (conj-sql "(")
-      n (assoc-in [:opts :neste]  false)
+      n (assoc-in [:opts :nested]  false)
       true (f)
       n (conj-sql ")"))))
 
