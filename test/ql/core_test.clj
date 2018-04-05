@@ -19,6 +19,10 @@
 
 
   (matcho/match
+   (sut/sql "str" {:style :honeysql})
+   {:sql "?" :params ["str"]})
+
+  (matcho/match
    (sut/sql {:ql/type :ql/param :ql/value 10})
    {:sql "?" :params [10]})
 
