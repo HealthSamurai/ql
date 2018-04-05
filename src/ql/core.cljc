@@ -42,9 +42,7 @@
 (defmethod to-sql java.lang.String
   [acc expr]
   (if (= :honeysql (get-in acc [:opts :style]))
-    (-> acc
-       (conj-sql "?")
-       (conj-param expr))
+    (conj-param acc expr)
     (conj-sql acc (str "'" expr "'"))))
 
 (defmethod to-sql nil
