@@ -6,15 +6,27 @@
         (vector? x) (first x)
         :else (type x)))
 
+(defn simple-type? [x]
+  (not (or (vector? x) (map? x))))
+
 (defmulti to-sql (fn [{sql :sql params :params} x] (dispatch-sql x)))
+
+(defn cast-to-sql-debug-string [x]
+  (if (simple-type? x)
+    (-> (to-sql {} x)
+        :sql
+        first)
+    (str x)))
 
 (defn conj-sql [acc & sql]
   (update acc :sql (fn [x] (apply conj x sql))))
 
 (defn conj-param [acc v]
-  (-> acc 
-   (conj-sql "?")
-   (update :params conj v)))
+  (if (= :debug (get-in acc [:opts :format]))
+    (conj-sql acc (cast-to-sql-debug-string v))
+    (-> acc
+        (conj-sql "?")
+        (update :params conj v))))
 
 (defn reduce-separated [sep f acc coll]
   (loop [acc acc

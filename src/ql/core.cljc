@@ -72,6 +72,7 @@
                         (update expr :ql/type (fn [x] (if x x :ql/select)))
                         expr))
              (update :sql (fn [x] (str/join " " x))))]
-    (if (= :jdbc (:format opts))
-      (into [(:sql res)] (:params res))
+    (case (:format opts)
+      :jdbc  (into [(:sql res)] (:params res))
+      :debug res
       res)))
