@@ -1,8 +1,9 @@
 (ns testdb
-  (:require [clojure.java.jdbc :as jdbc]
-            [cheshire.core :as json])
-  (:import [org.postgresql.jdbc PgArray]
-           org.postgresql.util.PGobject))
+  (:require [cheshire.core :as json]
+            [clojure.java.jdbc :as jdbc]
+            [clojure.test :refer [deftest]]
+            [matcho.core :as matcho])
+  (:import org.postgresql.util.PGobject))
 
 (def cfg
   {:connection-uri
@@ -28,6 +29,8 @@
 (defn execute [q]
   (jdbc/execute! cfg q))
 
-
-(query ["select '[1,3]'::jsonb"])
+(deftest test-query
+  (matcho/match
+   (query ["select '[1,3]'::jsonb json_array"])
+   [{:json_array [1 3]}]))
 
