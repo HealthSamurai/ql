@@ -27,6 +27,10 @@
    {:sql "?" :params [10]})
 
   (matcho/match
+   (sut/sql {:ql/type :ql/param :ql/value "str"} {:format :debug})
+   {:sql "'str'" :params []})
+
+  (matcho/match
    (sut/sql {:ql/type :ql/projection
              :alias :column})
    {:sql "column AS alias"})
