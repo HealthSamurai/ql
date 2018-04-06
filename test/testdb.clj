@@ -4,8 +4,10 @@
   (:import [org.postgresql.jdbc PgArray]
            org.postgresql.util.PGobject))
 
-
-(def cfg {:connection-uri (System/getenv "DATABASE_URL")})
+(def cfg
+  {:connection-uri
+   (or (System/getenv "DATABASE_URL")
+       "jdbc:postgresql://localhost:5447/ql?user=postgres&password=verysecret")})
 
 (extend-protocol jdbc/IResultSetReadColumn
   ;; (result-set-read-column [v _ _] (vec (.getArray v)))
