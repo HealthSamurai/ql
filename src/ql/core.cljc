@@ -74,5 +74,5 @@
              (update :sql (fn [x] (str/join " " x))))]
     (case (:format opts)
       :jdbc  (into [(:sql res)] (:params res))
-      :debug res
+      :inline res
       res)))

@@ -11,7 +11,7 @@
 
 (defmulti to-sql (fn [{sql :sql params :params} x] (dispatch-sql x)))
 
-(defn cast-to-sql-debug-string [x]
+(defn cast-to-sql-string [x]
   (if (simple-type? x)
     (-> (to-sql {} x)
         :sql
@@ -22,8 +22,8 @@
   (update acc :sql (fn [x] (apply conj x sql))))
 
 (defn conj-param [acc v]
-  (if (= :debug (get-in acc [:opts :format]))
-    (conj-sql acc (cast-to-sql-debug-string v))
+  (if (= :inline (get-in acc [:opts :format]))
+    (conj-sql acc (cast-to-sql-string v))
     (-> acc
         (conj-sql "?")
         (update :params conj v))))
