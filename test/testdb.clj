@@ -1,11 +1,14 @@
 (ns testdb
-  (:require [clojure.java.jdbc :as jdbc]
-            [cheshire.core :as json])
-  (:import [org.postgresql.jdbc PgArray]
-           org.postgresql.util.PGobject))
+  (:require [cheshire.core :as json]
+            [clojure.java.jdbc :as jdbc]
+            [clojure.test :refer [deftest]]
+            [matcho.core :as matcho])
+  (:import org.postgresql.util.PGobject))
 
-
-(def cfg {:connection-uri (System/getenv "DATABASE_URL")})
+(def cfg
+  {:connection-uri
+   (or (System/getenv "DATABASE_URL")
+       "jdbc:postgresql://localhost:5447/ql?user=postgres&password=verysecret")})
 
 (extend-protocol jdbc/IResultSetReadColumn
   ;; (result-set-read-column [v _ _] (vec (.getArray v)))
@@ -26,6 +29,8 @@
 (defn execute [q]
   (jdbc/execute! cfg q))
 
-
-(query ["select '[1,3]'::jsonb"])
+(deftest test-query
+  (matcho/match
+   (query ["select '[1,3]'::jsonb json_array"])
+   [{:json_array [1 3]}]))
 
