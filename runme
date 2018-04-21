@@ -1,0 +1,63 @@
+#!/bin/sh
+
+ProgName=$(basename $0)
+  
+sub_help(){
+    echo "Usage: $ProgName <subcommand> [options]\n"
+    echo "Subcommands:"
+    echo "    repl  run repl"
+    echo "    tests run tests"
+    echo ""
+    echo "For help with each subcommand run:"
+    echo "$ProgName <subcommand> -h|--help"
+    echo ""
+}
+  
+sub_repl(){
+
+  echo "Starting repl..."
+
+  clj \
+      -A:dev \
+      -Sdeps '{:deps {org.clojure/tools.nrepl {:mvn/version "0.2.13"} refactor-nrepl {:mvn/version "2.4.0-SNAPSHOT"} cider/cider-nrepl {:mvn/version "0.17.0-SNAPSHOT"}}}' \
+      -e '(require (quote cider-nrepl.main)) (cider-nrepl.main/init ["refactor-nrepl.middleware/wrap-refactor", "cider.nrepl/cider-middleware"])'
+}
+
+sub_build(){
+  clj -Sdeps '{:deps {pack/pack.alpha {:git/url "https://github.com/juxt/pack.alpha.git" :sha "bb2c5a2c78aca9328e023b029c06ba0efdd1e3b7"}}}' \
+    -m mach.pack.alpha.capsule deps.edn proto.jar build_dir proto 0.0.1
+}
+  
+sub_tests(){
+  echo "Running tests..."
+
+cat << EOF |
+  -d, --dir DIRNAME       Name of the directory containing tests. Defaults to "test".
+  -n, --namespace SYMBOL  Symbol indicating a specific namespace to test.
+  -v, --var SYMBOL        Symbol indicating the fully qualified name of a specific test.
+  -i, --include KEYWORD   Run only tests that have this metadata keyword.
+  -e, --exclude KEYWORD   Exclude tests with this metadata keyword.
+  -h, --help              Display this help message
+EOF
+
+  clj -A:dev \
+  -Sdeps '{:deps {com.cognitect/test-runner {:git/url "https://github.com/levand/test-runner" :sha "5fb4fc46ad0bf2e0ce45eba5b9117a2e89166479"}}}' \
+  -m cognitect.test-runner
+
+}
+  
+subcommand=$1
+case $subcommand in
+    "" | "-h" | "--help")
+        sub_help
+        ;;
+    *)
+        shift
+        sub_${subcommand} $@
+        if [ $? = 127 ]; then
+            echo "Error: '$subcommand' is not a known subcommand." >&2
+            echo "       Run '$ProgName --help' for a list of known subcommands." >&2
+            exit 1
+        fi
+        ;;
+esac
