@@ -1,10 +1,13 @@
 (ns ql.core
-  (:require [clojure.string :as str]
-            [ql.method :refer [to-sql conj-sql conj-param reduce-separated operator-args
-                               clear-ql-keys only-ql-keys]]
+  (:require [clojure.spec.alpha :as s]
+            [clojure.spec.test.alpha :as stest]
+            [clojure.string :as str]
             [ql.select]
             [ql.insert]
-            [ql.pg.core]))
+            [ql.pg.core]
+            [ql.method :refer [conj-param conj-sql operator-args to-sql]]))
+
+(def default-opts (merge ql.select/default-opts))
 
 (defmethod to-sql :ql/param
   [acc expr]
@@ -67,7 +70,7 @@
 
 (defn sql [expr & [opts]]
   (let [res (->
-             {:sql [] :params [] :opts opts}
+             {:sql [] :params [] :opts (merge default-opts opts)}
              (to-sql  (if (map? expr)
                         (update expr :ql/type (fn [x] (if x x :ql/select)))
                         expr))
