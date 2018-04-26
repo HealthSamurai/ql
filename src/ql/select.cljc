@@ -48,6 +48,35 @@
 
 ;; TABLE [ ONLY ] table_name [ * ]
 
+(def default-opts {:reduce-order
+                   {:ql/select [{:key          :ql/with
+                                  :token        "WITH"
+                                  :default-type :ql/with}
+                                 {:key          :ql/select
+                                  :token        "SELECT"
+                                  :default-type :ql/projection}
+                                 {:key          :ql/from
+                                  :token        "FROM"
+                                  :opts         {:nested true}
+                                  :default-type :ql/from}
+                                 {:key          :ql/where
+                                  :token        "WHERE"
+                                  :default-type :ql/predicate}
+                                 {:key          :ql/joins
+                                  :default-type :ql/joins}
+                                 {:key          :ql/group-by
+                                  :token        "GROUP BY"
+                                  :default-type :ql/projection}
+                                 {:key          :ql/order-by
+                                  :token        "ORDER BY"
+                                  :default-type :ql/list}
+                                 {:key          :ql/limit
+                                  :token        "LIMIT"
+                                  :default-type :ql/param}
+                                 {:key          :ql/offset
+                                  :token        "OFFSET"
+                                  :default-type :ql/param}]}})
+
 (defmethod to-sql :ql/projection
   [acc expr]
   (reduce-separated
@@ -164,33 +193,7 @@
                                   (assoc v :ql/type tp)
                                   :else v)))
                  acc))
-             acc [{:key          :ql/with
-                   :token        "WITH"
-                   :default-type :ql/with}
-                  {:key          :ql/select
-                   :token        "SELECT"
-                   :default-type :ql/projection}
-                  {:key          :ql/from
-                   :token        "FROM"
-                   :opts         {:nested true}
-                   :default-type :ql/from}
-                  {:key          :ql/where
-                   :token        "WHERE"
-                   :default-type :ql/predicate}
-                  {:key          :ql/joins
-                   :default-type :ql/joins}
-                  {:key          :ql/group-by
-                   :token        "GROUP BY"
-                   :default-type :ql/projection}
-                  {:key          :ql/order-by
-                   :token        "ORDER BY"
-                   :default-type :ql/list}
-                  {:key          :ql/limit
-                   :token        "LIMIT"
-                   :default-type :ql/param}
-                  {:key          :ql/offset
-                   :token        "OFFSET"
-                   :default-type :ql/param}]))))
+             acc (get-in acc [:opts :reduce-order :ql/select ])))))
 
 (defmethod to-sql :ql/limit
   [acc expr]

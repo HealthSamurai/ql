@@ -55,6 +55,34 @@ Insert with json and string values example:
  :opts   nil}
 ```
 
+Extend select query with `:mssql/options` clause:
+
+```clj
+(defmethod ql.method/to-sql :mssql/options
+  [acc expr]
+  (ql.method/reduce-separated
+   ","
+   (fn [acc [k v]]
+     (-> acc
+         (ql.method/conj-sql (name k) "=")
+         (ql.method/to-sql v)))
+   acc (dissoc expr :ql/type)))
+
+(ql/sql
+ {:ql/type       :ql/select
+  :ql/select     :*
+  :ql/from       :user
+  :mssql/options {:a 1}}
+ (ql.method/add-clause ql/default-opts
+                       :ql/select
+                       :before
+                       :ql/order-by
+                       {:key          :mssql/options
+                        :default-type :mssql/options
+                        :token        "OPTIONS"}))
+;; => {:sql "SELECT * FROM user OPTIONS a = 1", :params [], :opts ...}
+```
+
 ## How it works
 
 `ql` is a data-driven DSL, which converts tree structure into SQL string with
