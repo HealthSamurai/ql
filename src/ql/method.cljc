@@ -62,5 +62,18 @@
             (if (= "ql" (namespace k))
               (assoc m k v) m)) {} m))
 
+(defn add-clause
+  "Add a new clause to reduce order for specific ql-type,
+  can be used for extending existing to-sql implementation"
+  [opts ql-type action clause-key new-clause]
+  (update-in opts [:reduce-order ql-type]
+             (fn [a] (reduce #(into %1 (if (= clause-key (:key %2))
+                                         (case action
+                                           :before [new-clause %2]
+                                           :after  [%2 new-clause])
+                                         [%2]))
+                             []
+                             a))))
+
 (only-ql-keys {:ql/a 1 :k 2})
 (clear-ql-keys {:ql/a 1 :k 2})
