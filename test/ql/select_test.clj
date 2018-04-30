@@ -97,3 +97,26 @@
      :ql/where  [:ql/= :user.id [:ql/param 1]]} {:inline true})
    {:sql "SELECT a AS a , b AS b FROM ( SELECT * FROM user ) WHERE user.id = 1"}))
 
+(deftest test-pretty-print
+  (matcho/match
+   (ql/sql
+    {:ql/select {:a :a
+                 :b :b}
+     :ql/from   {:ql/type :ql/select :ql/select :* :ql/from :user}
+     :ql/where  [:ql/= :user.id 1]} {:format :pretty})
+   {:sql
+    "SELECT
+  a AS a ,
+  b AS b
+FROM
+  (
+    SELECT
+      *
+    FROM
+      user
+  )
+WHERE
+  user.id = 1"
+    })
+  )
+

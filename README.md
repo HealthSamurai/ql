@@ -55,6 +55,29 @@ Insert with json and string values example:
  :opts   nil}
 ```
 
+Pretty printing sql with `{:format :pretty}`:
+
+```clj
+(:sql (ql/sql
+       {:ql/select {:a :a
+                    :b :b}
+        :ql/from   {:ql/type :ql/select :ql/select :* :ql/from :user}
+        :ql/where  [:ql/= :user.id 1]} {:format :pretty}))
+;; => SELECT
+;;      a AS a ,
+;;      b AS b
+;;    FROM
+;;      (
+;;        SELECT
+;;          *
+;;        FROM
+;;          user
+;;      )
+;;    WHERE
+;;      user.id = 1
+
+```
+
 Extend select query with `:mssql/options` clause:
 
 ```clj
