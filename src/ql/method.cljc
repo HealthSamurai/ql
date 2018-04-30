@@ -33,7 +33,7 @@
          [x & xs] coll]
     (if (nil? xs)
       (f acc x)
-      (recur (update (f acc x) :sql conj sep) xs))))
+      (recur (conj-sql (f acc x) sep) xs))))
 
 (defn comma-separated [ks]
   (->> ks
