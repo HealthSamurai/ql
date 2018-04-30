@@ -27,7 +27,7 @@
    {:sql "?" :params [10]})
 
   (matcho/match
-   (sut/sql {:ql/type :ql/param :ql/value "str"} {:format :inline})
+   (sut/sql {:ql/type :ql/param :ql/value "str"} {:inline true})
    {:sql "'str'" :params []})
 
   (matcho/match
