@@ -28,7 +28,7 @@
         (update :pretty-sql (fn [x] (apply conj x pretty-sql))))))
 
 (defn conj-param [acc v]
-  (if (= :inline (get-in acc [:opts :format]))
+  (if (get-in acc [:opts :inline])
     (conj-sql acc (cast-to-sql-string v))
     (-> acc
         (conj-sql "?")
