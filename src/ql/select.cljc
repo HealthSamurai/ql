@@ -1,5 +1,6 @@
 (ns ql.select
   (:require [clojure.string :as str]
+            [ql.pretty-sql :as ps]
             [ql.method :refer [to-sql conj-sql conj-param reduce-separated clear-ql-keys]]))
 
 
@@ -80,7 +81,7 @@
 (defmethod to-sql :ql/projection
   [acc expr]
   (reduce-separated
-   ","
+   ["," ::ps/newline]
    (fn [acc [k v]]
      (let [complex? (or (vector? v) (map? v))]
        (cond-> acc
@@ -173,10 +174,10 @@
 (defn parens-if-nested [acc f]
   (let [n (get-in acc [:opts :nested])]
     (cond-> acc
-      n (conj-sql "(")
+      n (conj-sql "(" ::ps/newline ::ps/ident)
       n (assoc-in [:opts :nested]  false)
       true (f)
-      n (conj-sql ")"))))
+      n (conj-sql ::ps/deident ")"))))
 
 (defmethod to-sql :ql/select
   [acc expr]
@@ -187,13 +188,14 @@
                (if-let [v (get expr k)]
                  (cond-> acc
                    opts (update :opts merge opts)
-                   tk   (conj-sql tk)
+                   tk   (conj-sql tk ::ps/newline ::ps/ident)
                    true (to-sql (cond
                                   (and (map? v) (not (:ql/type v)) tp)
                                   (assoc v :ql/type tp)
-                                  :else v)))
+                                  :else v))
+                   tk   (conj-sql ::ps/newline ::ps/deident))
                  acc))
-             acc (get-in acc [:opts :reduce-order :ql/select ])))))
+             acc (get-in acc [:opts :reduce-order :ql/select])))))
 
 (defmethod to-sql :ql/limit
   [acc expr]

@@ -1,5 +1,6 @@
 (ns ql.method
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [ql.pretty-sql :as pretty-sql]))
 
 (defn dispatch-sql [x]
   (cond (map? x) (get x :ql/type)
@@ -19,10 +20,15 @@
     (str x)))
 
 (defn conj-sql [acc & sql]
-  (update acc :sql (fn [x] (apply conj x sql))))
+  (let [sql        (flatten sql)
+        plain-sql  (filter (complement pretty-sql/pretty-operations) sql)
+        pretty-sql sql]
+    (-> acc
+        (update :sql (fn [x] (apply conj x plain-sql)))
+        (update :pretty-sql (fn [x] (apply conj x pretty-sql))))))
 
 (defn conj-param [acc v]
-  (if (= :inline (get-in acc [:opts :format]))
+  (if (get-in acc [:opts :inline])
     (conj-sql acc (cast-to-sql-string v))
     (-> acc
         (conj-sql "?")
@@ -33,7 +39,7 @@
          [x & xs] coll]
     (if (nil? xs)
       (f acc x)
-      (recur (update (f acc x) :sql conj sep) xs))))
+      (recur (conj-sql (f acc x) sep) xs))))
 
 (defn comma-separated [ks]
   (->> ks

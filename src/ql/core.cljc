@@ -3,6 +3,7 @@
             [clojure.spec.test.alpha :as stest]
             [clojure.string :as str]
             [ql.select]
+            [ql.pretty-sql :as pretty-sql]
             [ql.insert]
             [ql.pg.core]
             [ql.method :refer [conj-param conj-sql operator-args to-sql]]))
@@ -70,12 +71,13 @@
 
 (defn sql [expr & [opts]]
   (let [res (->
-             {:sql [] :params [] :opts (merge default-opts opts)}
+             {:sql [] :pretty-sql [] :params [] :opts (merge default-opts opts)}
              (to-sql  (if (map? expr)
                         (update expr :ql/type (fn [x] (if x x :ql/select)))
                         expr))
              (update :sql (fn [x] (str/join " " x))))]
-    (case (:format opts)
-      :jdbc  (into [(:sql res)] (:params res))
-      :inline res
-      res)))
+     (case (:format opts)
+       :jdbc  (into [(:sql res)] (:params res))
+       :pretty (assoc res :sql (pretty-sql/make-pretty-sql (:pretty-sql res)))
+       res)))
+
